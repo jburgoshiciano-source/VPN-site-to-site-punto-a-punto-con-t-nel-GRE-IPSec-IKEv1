@@ -1,0 +1,145 @@
+IOU1 — ISP (solo enrutamiento básico)
+ioshostname IOU1
+
+interface Ethernet0/0
+ ip address 12.0.0.1 255.255.255.252
+ no shutdown
+
+interface Ethernet0/1
+ ip address 23.0.0.1 255.255.255.252
+ no shutdown
+
+IOU2 — HQ (Sitio A)
+ioshostname IOU2
+
+! ──────────────────────────────────────────
+!  INTERFACES FÍSICAS
+! ──────────────────────────────────────────
+interface Ethernet0/0
+ description Link-to-ISP
+ ip address 12.0.0.2 255.255.255.252
+ no shutdown
+
+interface Ethernet0/1
+ description LAN-HQ
+ ip address 192.168.1.1 255.255.255.0
+ no shutdown
+
+! ──────────────────────────────────────────
+!  FASE 1 — IKEv1 ISAKMP Policy
+! ──────────────────────────────────────────
+crypto isakmp policy 10
+ encryption aes 256
+ hash sha256
+ authentication pre-share
+ group 14
+ lifetime 86400
+
+crypto isakmp key CLAVE_VPN address 23.0.0.2
+
+! ──────────────────────────────────────────
+!  FASE 2 — IPSec Transform Set
+! ──────────────────────────────────────────
+crypto ipsec transform-set TS_GRE esp-aes 256 esp-sha256-hmac
+ mode transport
+
+! ──────────────────────────────────────────
+!  CRYPTO MAP (protege tráfico GRE)
+! ──────────────────────────────────────────
+ip access-list extended ACL_GRE_HQ
+ permit gre host 12.0.0.2 host 23.0.0.2
+
+crypto map CMAP 10 ipsec-isakmp
+ set peer 23.0.0.2
+ set transform-set TS_GRE
+ match address ACL_GRE_HQ
+
+interface Ethernet0/0
+ crypto map CMAP
+
+! ──────────────────────────────────────────
+!  TÚNEL GRE
+! ──────────────────────────────────────────
+interface Tunnel0
+ description GRE-over-IPSec-to-Branch
+ ip address 10.0.0.1 255.255.255.252
+ tunnel source Ethernet0/0
+ tunnel destination 23.0.0.2
+ no shutdown
+
+! ──────────────────────────────────────────
+!  RUTA ESTÁTICA hacia red remota (Branch)
+! ──────────────────────────────────────────
+ip route 192.168.2.0 255.255.255.0 10.0.0.2
+ip route 23.0.0.0 255.255.255.252 12.0.0.1
+
+IOU3 — Branch (Sitio B)
+ioshostname IOU3
+
+! ──────────────────────────────────────────
+!  INTERFACES FÍSICAS
+! ──────────────────────────────────────────
+interface Ethernet0/1
+ description Link-to-ISP
+ ip address 23.0.0.2 255.255.255.252
+ no shutdown
+
+interface Ethernet0/2
+ description LAN-Branch
+ ip address 192.168.2.1 255.255.255.0
+ no shutdown
+
+! ──────────────────────────────────────────
+!  FASE 1 — IKEv1 ISAKMP Policy
+! ──────────────────────────────────────────
+crypto isakmp policy 10
+ encryption aes 256
+ hash sha256
+ authentication pre-share
+ group 14
+ lifetime 86400
+
+crypto isakmp key CLAVE_VPN address 12.0.0.2
+
+! ──────────────────────────────────────────
+!  FASE 2 — IPSec Transform Set
+! ──────────────────────────────────────────
+crypto ipsec transform-set TS_GRE esp-aes 256 esp-sha256-hmac
+ mode transport
+
+! ──────────────────────────────────────────
+!  CRYPTO MAP (protege tráfico GRE)
+! ──────────────────────────────────────────
+ip access-list extended ACL_GRE_BRANCH
+ permit gre host 23.0.0.2 host 12.0.0.2
+
+crypto map CMAP 10 ipsec-isakmp
+ set peer 12.0.0.2
+ set transform-set TS_GRE
+ match address ACL_GRE_BRANCH
+
+interface Ethernet0/1
+ crypto map CMAP
+
+! ──────────────────────────────────────────
+!  TÚNEL GRE
+! ──────────────────────────────────────────
+interface Tunnel0
+ description GRE-over-IPSec-to-HQ
+ ip address 10.0.0.2 255.255.255.252
+ tunnel source Ethernet0/1
+ tunnel destination 12.0.0.2
+ no shutdown
+
+! ──────────────────────────────────────────
+!  RUTA ESTÁTICA hacia red remota (HQ)
+! ──────────────────────────────────────────
+ip route 192.168.1.0 255.255.255.0 10.0.0.1
+ip route 12.0.0.0 255.255.255.252 23.0.0.1
+
+VPCS — Configuración básica
+bash# PC-A (conectada a IOU2)
+ip 192.168.1.10 255.255.255.0 192.168.1.1
+
+# PC-B (conectada a IOU3)
+ip 192.168.2.10 255.255.255.0 192.168.2.1
