@@ -1,8 +1,13 @@
 # VPN-site-to-site-punto-a-punto-con-t-nel-GRE-IPSec-IKEv1
 
-# 🔐 VPN Site-to-Site — Túnel GRE sobre IPsec (IKEv1)
 
-**Juan Francisco Burgos Hiciano – 2023-1981**
+## 📌 Información General
+
+**Estudiante:** Juan Francisco Burgos Hiciano  
+
+**Matrícula:** 2023-1981  
+
+**Asignatura:** Seguridad en Redes
 
 📹 Video demostración: https://youtu.be/QIDH8X94Xzw  
 
@@ -29,6 +34,12 @@ La solución garantiza:
 - Integridad
 - Autenticación del tráfico
 - Conectividad transparente entre LANs
+
+---
+
+## 🖼️ Topología
+
+![Topología VPN](https://github.com/jburgoshiciano-source/VPN-site-to-site-punto-a-punto-basado-en-pol-ticas-IKEv1/blob/d23e0d65d52c49780f8bd311b8fe0ae018c5a713/vpn.png)
 
 ---
 
